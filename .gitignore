@@ -1,0 +1,15 @@
+# Build-Ordner
+/build/
+*/build/
+
+# Android Studio spezifisch
+/.idea/
+*.iml
+*.iws
+
+# Lokale Gradle Dateien
+.gradle/
+local.properties
+
+# Log-Dateien
+*.log

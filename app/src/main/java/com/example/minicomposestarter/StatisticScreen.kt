@@ -9,7 +9,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun HomeScreen(vm: CounterViewModel) {
+fun StatisticScreen(vm: CounterViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -17,16 +17,16 @@ fun HomeScreen(vm: CounterViewModel) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Home Placeholder", style = MaterialTheme.typography.headlineMedium)
+        Text("Statistic Placeholder", style = MaterialTheme.typography.headlineMedium)
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun PreviewHomeScreen() {
+fun PreviewStatisticScreen() {
     MaterialTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
-            HomeScreen(vm = CounterViewModel()) // preview-only instance
+            StatisticScreen(vm = CounterViewModel()) // preview-only instance
         }
     }
 }
