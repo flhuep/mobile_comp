@@ -9,7 +9,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun AboutScreen(vm: CounterViewModel) {
+fun ExerciseScreen(vm: CounterViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -17,18 +17,16 @@ fun AboutScreen(vm: CounterViewModel) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("About Screen", style = MaterialTheme.typography.headlineSmall)
-        Spacer(modifier = Modifier.height(16.dp))
-        Text("Current count: ${vm.count}", style = MaterialTheme.typography.bodyLarge)
+        Text("Exercise Placeholder", style = MaterialTheme.typography.headlineMedium)
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun PreviewAboutScreen() {
+fun PreviewExerciseScreen() {
     MaterialTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
-            AboutScreen(vm = CounterViewModel()) // preview-only instance
+            ExerciseScreen(vm = CounterViewModel()) // preview-only instance
         }
     }
 }
