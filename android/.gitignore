@@ -13,3 +13,7 @@ local.properties
 
 # Log-Dateien
 *.log
+
+# Firebase Konfiguration (enthält sensible API-Keys)
+app/google-services.json
+google-services.json

@@ -1,4 +1,4 @@
-package com.example.minicomposestarter
+package com.example.pushup
 
 import androidx.lifecycle.ViewModel
 
