@@ -7,17 +7,17 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -37,12 +37,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.pushup.ui.screens.AdminSeedScreen
 import com.example.pushup.ui.screens.CreateExerciseScreen
 import com.example.pushup.ui.screens.CreateWorkoutAIScreen
 import com.example.pushup.ui.screens.CreateWorkoutChoiceScreen
 import com.example.pushup.ui.screens.CreateWorkoutManualScreen
 import com.example.pushup.ui.screens.WorkoutDetailScreen
+import com.example.pushup.ui.screens.WorkoutExecutionScreen
 import com.example.pushup.viewmodels.AuthState
 import com.example.pushup.viewmodels.AuthViewModel
 
@@ -151,7 +151,7 @@ fun MiniApp(authViewModel: AuthViewModel = viewModel()) {
                 actions = {
                     IconButton(onClick = { authViewModel.logout() }) {
                         Icon(
-                            imageVector = Icons.Default.ExitToApp,
+                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                             contentDescription = "Logout",
                             tint = Color.White
                         )
@@ -182,7 +182,7 @@ fun MiniApp(authViewModel: AuthViewModel = viewModel()) {
             }
         },
         bottomBar = {
-            TabRow(
+            SecondaryTabRow(
                 selectedTabIndex = selectedIndex,
                 containerColor = Color.DarkGray,
                 contentColor = Color.White
@@ -215,8 +215,7 @@ fun MiniApp(authViewModel: AuthViewModel = viewModel()) {
             composable(TopDest.Home.route) { HomeScreen(vm, navController) }
             composable(TopDest.Workouts.route) { WorkoutScreen(navController) }
             composable(TopDest.Exercises.route) { ExerciseScreen() }
-            composable(TopDest.Statistic.route) { StatisticScreen(vm) }
-            composable("adminSeed") { AdminSeedScreen() }
+            composable(TopDest.Statistic.route) { StatisticScreen() }
             composable("createWorkoutChoice") { CreateWorkoutChoiceScreen(navController) }
             composable("createWorkoutManual") { CreateWorkoutManualScreen(navController) }
             composable("createWorkoutAI") { CreateWorkoutAIScreen(navController) }
@@ -227,6 +226,17 @@ fun MiniApp(authViewModel: AuthViewModel = viewModel()) {
             ) { backStackEntry ->
                 val workoutId = backStackEntry.arguments?.getString("workoutId") ?: ""
                 WorkoutDetailScreen(workoutId = workoutId, navController = navController)
+            }
+            composable(
+                route = "workoutExecution/{workoutId}",
+                arguments = listOf(navArgument("workoutId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val workoutId = backStackEntry.arguments?.getString("workoutId") ?: ""
+                WorkoutExecutionScreen(
+                    workoutId = workoutId,
+                    onNavigateBack = { navController.popBackStack() },
+                    authViewModel = authViewModel
+                )
             }
         }
     }

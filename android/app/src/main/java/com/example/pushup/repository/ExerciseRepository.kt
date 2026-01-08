@@ -193,6 +193,16 @@ class ExerciseRepository {
     suspend fun getPublicExercises(): List<Exercise> {
         return try {
             println("🔍 ExerciseRepository.getPublicExercises() called")
+            
+            // Check if user is authenticated
+            val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+            println("👤 Current user: ${currentUser?.uid ?: "NOT AUTHENTICATED"}")
+            
+            if (currentUser == null) {
+                println("⚠️ WARNING: User is not authenticated!")
+                return emptyList()
+            }
+            
             val snapshot = exercisesCollection
                 .whereEqualTo("userId", "")
                 .get()
@@ -207,6 +217,7 @@ class ExerciseRepository {
             exercises
         } catch (e: Exception) {
             println("❌ Error loading public exercises: ${e.message}")
+            e.printStackTrace()
             emptyList()
         }
     }

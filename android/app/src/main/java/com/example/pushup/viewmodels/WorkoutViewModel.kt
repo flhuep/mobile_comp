@@ -2,6 +2,7 @@ package com.example.pushup.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.pushup.models.PlannedSet
 import com.example.pushup.models.Workout
 import com.example.pushup.models.WorkoutWithExercises
 import com.example.pushup.repository.ExerciseRepository
@@ -99,7 +100,7 @@ class WorkoutViewModel : ViewModel() {
                 val workout = Workout(
                     name = name,
                     description = description,
-                    exerciseIds = exerciseIds,
+                    plannedExercises = emptyList(),
                     createdAt = System.currentTimeMillis(),
                     isCompleted = false,
                     completedAt = null,
@@ -234,6 +235,51 @@ class WorkoutViewModel : ViewModel() {
                 workoutRepository.removeExerciseFromWorkout(workoutId, exerciseId)
             } catch (e: Exception) {
                 _error.value = "Failed to remove exercise: ${e.message}"
+            }
+        }
+    }
+    
+    /**
+     * Update planned sets for an exercise in a workout
+     */
+    fun updatePlannedSets(workoutId: String, exerciseId: String, sets: List<PlannedSet>) {
+        viewModelScope.launch {
+            try {
+                workoutRepository.updatePlannedSets(workoutId, exerciseId, sets)
+            } catch (e: Exception) {
+                _error.value = "Failed to update sets: ${e.message}"
+            }
+        }
+    }
+    
+    /**
+     * Add a set to an exercise in a workout
+     */
+    fun addSetToExercise(
+        workoutId: String,
+        exerciseId: String,
+        targetReps: Int,
+        targetWeight: Double,
+        restTime: Int = 60
+    ) {
+        viewModelScope.launch {
+            try {
+                workoutRepository.addSetToExercise(workoutId, exerciseId, targetReps, targetWeight, restTime)
+            } catch (e: Exception) {
+                _error.value = "Failed to add set: ${e.message}"
+            }
+        }
+    }
+    
+    /**
+     * Remove a set from an exercise in a workout
+     */
+    fun removeSetFromExercise(workoutId: String, exerciseId: String, setIndex: Int) {
+        viewModelScope.launch {
+            try {
+                workoutRepository.removeSetFromExercise(workoutId, exerciseId, setIndex)
+            } catch (e: Exception) {
+                _error.value = "Failed to remove set: ${e.message}"
             }
         }
     }

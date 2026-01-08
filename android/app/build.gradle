@@ -26,7 +26,7 @@ android {
         versionName "1.0"
         
         // Add Gemini API Key to BuildConfig
-        buildConfigField "String", "GEMINI_API_KEY", "\"${localProperties.getProperty('GEMINI_API_KEY', '')}\""
+        //buildConfigField "String", "GEMINI_API_KEY", "\"${localProperties.getProperty('GEMINI_API_KEY', '')}\""
     }
 
     buildTypes {
@@ -51,7 +51,7 @@ android {
 
 dependencies {
     implementation platform("androidx.compose:compose-bom:$compose_bom")
-    implementation 'androidx.activity:activity-compose:1.12.0'
+    implementation 'androidx.activity:activity-compose:1.12.2'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.10.0'
     implementation 'androidx.compose.ui:ui'
     implementation 'androidx.compose.ui:ui-tooling-preview'
@@ -60,7 +60,7 @@ dependencies {
     implementation 'androidx.navigation:navigation-compose:2.9.6'
 
     // Firebase
-    implementation platform('com.google.firebase:firebase-bom:34.6.0')
+    implementation platform('com.google.firebase:firebase-bom:34.7.0')
     implementation 'com.google.firebase:firebase-firestore'
     implementation 'com.google.firebase:firebase-auth'
     implementation 'com.google.firebase:firebase-ai'

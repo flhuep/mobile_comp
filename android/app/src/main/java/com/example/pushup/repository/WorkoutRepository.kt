@@ -1,5 +1,7 @@
 package com.example.pushup.repository
 
+import com.example.pushup.models.PlannedExercise
+import com.example.pushup.models.PlannedSet
 import com.example.pushup.models.Workout
 import com.example.pushup.models.WorkoutWithExercises
 import com.google.firebase.firestore.FirebaseFirestore
@@ -182,12 +184,20 @@ class WorkoutRepository {
      */
     suspend fun addExerciseToWorkout(workoutId: String, exerciseId: String) {
         val workout = getWorkout(workoutId) ?: return
-        val updatedExerciseIds = workout.exerciseIds.toMutableList().apply {
-            if (!contains(exerciseId)) {
-                add(exerciseId)
+        val newPlannedExercise = PlannedExercise(
+            exerciseId = exerciseId,
+            sets = listOf(
+                PlannedSet(setNumber = 1, targetReps = 10, targetWeight = 0.0, restTime = 150),
+                PlannedSet(setNumber = 2, targetReps = 10, targetWeight = 0.0, restTime = 150),
+                PlannedSet(setNumber = 3, targetReps = 10, targetWeight = 0.0, restTime = 150)
+            )
+        )
+        val updatedPlannedExercises = workout.plannedExercises.toMutableList().apply {
+            if (!any { it.exerciseId == exerciseId }) {
+                add(newPlannedExercise)
             }
         }
-        val updatedWorkout = workout.copy(exerciseIds = updatedExerciseIds)
+        val updatedWorkout = workout.copy(plannedExercises = updatedPlannedExercises)
         updateWorkout(updatedWorkout)
     }
 
@@ -198,8 +208,89 @@ class WorkoutRepository {
      */
     suspend fun removeExerciseFromWorkout(workoutId: String, exerciseId: String) {
         val workout = getWorkout(workoutId) ?: return
-        val updatedExerciseIds = workout.exerciseIds.filter { it != exerciseId }
-        val updatedWorkout = workout.copy(exerciseIds = updatedExerciseIds)
+        val updatedPlannedExercises = workout.plannedExercises.filter { it.exerciseId != exerciseId }
+        val updatedWorkout = workout.copy(plannedExercises = updatedPlannedExercises)
+        updateWorkout(updatedWorkout)
+    }
+    
+    /**
+     * Update planned sets for an exercise in a workout
+     * @param workoutId The ID of the workout
+     * @param exerciseId The ID of the exercise
+     * @param sets The new list of planned sets
+     */
+    suspend fun updatePlannedSets(workoutId: String, exerciseId: String, sets: List<PlannedSet>) {
+        val workout = getWorkout(workoutId) ?: return
+        val updatedPlannedExercises = workout.plannedExercises.map { plannedExercise ->
+            if (plannedExercise.exerciseId == exerciseId) {
+                plannedExercise.copy(sets = sets)
+            } else {
+                plannedExercise
+            }
+        }
+        val updatedWorkout = workout.copy(plannedExercises = updatedPlannedExercises)
+        updateWorkout(updatedWorkout)
+    }
+    
+    /**
+     * Add a set to a planned exercise
+     * @param workoutId The ID of the workout
+     * @param exerciseId The ID of the exercise
+     * @param targetReps Target repetitions
+     * @param targetWeight Target weight
+     * @param restTime Rest time in seconds
+     */
+    suspend fun addSetToExercise(
+        workoutId: String, 
+        exerciseId: String, 
+        targetReps: Int, 
+        targetWeight: Double,
+        restTime: Int = 60
+    ) {
+        val workout = getWorkout(workoutId) ?: return
+        val updatedPlannedExercises = workout.plannedExercises.map { plannedExercise ->
+            if (plannedExercise.exerciseId == exerciseId) {
+                val newSetNumber = plannedExercise.sets.size + 1
+                val newSet = PlannedSet(
+                    setNumber = newSetNumber,
+                    targetReps = targetReps,
+                    targetWeight = targetWeight,
+                    restTime = restTime
+                )
+                plannedExercise.copy(sets = plannedExercise.sets + newSet)
+            } else {
+                plannedExercise
+            }
+        }
+        val updatedWorkout = workout.copy(plannedExercises = updatedPlannedExercises)
+        updateWorkout(updatedWorkout)
+    }
+    
+    /**
+     * Remove a set from a planned exercise
+     * @param workoutId The ID of the workout
+     * @param exerciseId The ID of the exercise
+     * @param setIndex Index of the set to remove
+     */
+    suspend fun removeSetFromExercise(workoutId: String, exerciseId: String, setIndex: Int) {
+        val workout = getWorkout(workoutId) ?: return
+        val updatedPlannedExercises = workout.plannedExercises.map { plannedExercise ->
+            if (plannedExercise.exerciseId == exerciseId) {
+                val updatedSets = plannedExercise.sets.toMutableList().apply {
+                    if (setIndex < size) {
+                        removeAt(setIndex)
+                    }
+                }
+                // Renumber sets
+                val renumberedSets = updatedSets.mapIndexed { index, set ->
+                    set.copy(setNumber = index + 1)
+                }
+                plannedExercise.copy(sets = renumberedSets)
+            } else {
+                plannedExercise
+            }
+        }
+        val updatedWorkout = workout.copy(plannedExercises = updatedPlannedExercises)
         updateWorkout(updatedWorkout)
     }
 

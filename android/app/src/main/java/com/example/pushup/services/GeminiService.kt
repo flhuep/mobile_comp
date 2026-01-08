@@ -1,11 +1,12 @@
 package com.example.pushup.services
 
 import com.example.pushup.models.Exercise
+import com.example.pushup.models.PlannedExercise
+import com.example.pushup.models.PlannedSet
 import com.example.pushup.models.Workout
 import com.google.firebase.Firebase
 import com.google.firebase.ai.ai
 import com.google.firebase.ai.type.GenerativeBackend
-import com.google.firebase.ai.type.generationConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -14,19 +15,6 @@ import org.json.JSONObject
  * Service for generating workouts using Gemini AI via Firebase AI
  */
 class GeminiService {
-    
-    private val generativeModel by lazy {
-        Firebase.ai(backend = GenerativeBackend.googleAI())
-            .generativeModel(
-                modelName = "gemini-2.0-flash-exp",
-                generationConfig = generationConfig {
-                    temperature = 0.7f
-                    topK = 40
-                    topP = 0.95f
-                    maxOutputTokens = 2048
-                }
-            )
-    }
 
     /**
      * Generate a workout based on user preferences using Firebase Vertex AI
@@ -51,10 +39,13 @@ class GeminiService {
                 goals = goals
             )
 
+            val model = Firebase.ai(backend = GenerativeBackend.googleAI())
+                .generativeModel("gemini-2.5-flash")
+
             println("🚀 DEBUG GeminiService: Prompt length: ${prompt.length} characters")
             println("🚀 DEBUG GeminiService: Calling Firebase AI generateContent()...")
             
-            val response = generativeModel.generateContent(prompt)
+            val response = model.generateContent(prompt)
             
             println("🚀 DEBUG GeminiService: Received response")
             val responseText = response.text ?: throw Exception("Empty response from Gemini")
@@ -96,12 +87,30 @@ User Profile:
 Available Exercises:
 $exerciseList
 
-Select 5-8 exercises from the list above. Respond ONLY with valid JSON (no markdown):
+Select 5-8 exercises from the list above and suggest sets with reps and weight for each.
+
+For weight recommendations:
+- Beginners: lighter weights (bodyweight=0kg, dumbbells=2-5kg)
+- Intermediate: moderate weights (dumbbells=5-10kg, barbells=10-20kg)
+- Advanced: heavier weights (dumbbells=10-20kg, barbells=20-40kg)
+
+Respond ONLY with valid JSON (no markdown):
 {
   "name": "Workout name",
   "description": "Brief description",
-  "exerciseIds": ["id1", "id2", "id3"]
+  "exercises": [
+    {
+      "exerciseId": "exercise_id_from_list",
+      "sets": [
+        {"reps": 10, "weight": 5.0, "restTime": 60},
+        {"reps": 10, "weight": 5.0, "restTime": 60},
+        {"reps": 8, "weight": 7.5, "restTime": 90}
+      ]
+    }
+  ]
 }
+
+Note: Weight is in kg. Use 0 for bodyweight exercises.
         """.trimIndent()
     }
 
@@ -126,29 +135,56 @@ Select 5-8 exercises from the list above. Respond ONLY with valid JSON (no markd
             
             println("DEBUG GeminiService: Workout name: $name")
             
-            val exerciseIdsArray = json.getJSONArray("exerciseIds")
-            val exerciseIds = mutableListOf<String>()
-            for (i in 0 until exerciseIdsArray.length()) {
-                exerciseIds.add(exerciseIdsArray.getString(i))
+            // Parse exercises array with sets
+            val exercisesArray = json.getJSONArray("exercises")
+            val plannedExercises = mutableListOf<PlannedExercise>()
+            
+            for (i in 0 until exercisesArray.length()) {
+                val exerciseObj = exercisesArray.getJSONObject(i)
+                val exerciseId = exerciseObj.getString("exerciseId")
+                
+                // Validate exercise exists
+                if (!availableExercises.any { it.id == exerciseId }) {
+                    println("DEBUG GeminiService: Skipping invalid exercise ID: $exerciseId")
+                    continue
+                }
+                
+                // Parse sets
+                val setsArray = exerciseObj.getJSONArray("sets")
+                val plannedSets = mutableListOf<PlannedSet>()
+                
+                for (j in 0 until setsArray.length()) {
+                    val setObj = setsArray.getJSONObject(j)
+                    val plannedSet = PlannedSet(
+                        setNumber = j + 1,
+                        targetReps = setObj.getInt("reps"),
+                        targetWeight = setObj.optDouble("weight", 0.0),
+                        restTime = setObj.optInt("restTime", 150)
+                    )
+                    plannedSets.add(plannedSet)
+                }
+                
+                if (plannedSets.isNotEmpty()) {
+                    plannedExercises.add(
+                        PlannedExercise(
+                            exerciseId = exerciseId,
+                            sets = plannedSets,
+                            notes = ""
+                        )
+                    )
+                }
             }
 
-            println("DEBUG GeminiService: AI suggested ${exerciseIds.size} exercises")
+            println("DEBUG GeminiService: AI suggested ${plannedExercises.size} exercises with sets")
 
-            // Validate that all exercise IDs exist
-            val validExerciseIds = exerciseIds.filter { id ->
-                availableExercises.any { it.id == id }
-            }
-
-            println("DEBUG GeminiService: ${validExerciseIds.size} exercises are valid")
-
-            if (validExerciseIds.isEmpty()) {
+            if (plannedExercises.isEmpty()) {
                 return Result.failure(Exception("No valid exercises found in AI response"))
             }
 
             val workout = Workout(
                 name = name,
                 description = description,
-                exerciseIds = validExerciseIds,
+                plannedExercises = plannedExercises,
                 createdAt = System.currentTimeMillis(),
                 isCompleted = false,
                 completedAt = null,
@@ -156,7 +192,7 @@ Select 5-8 exercises from the list above. Respond ONLY with valid JSON (no markd
             )
 
             println("DEBUG GeminiService: Workout parsed successfully")
-            Result.success(WorkoutGenerationResult(workout, validExerciseIds.size))
+            Result.success(WorkoutGenerationResult(workout, plannedExercises.size))
         } catch (e: Exception) {
             println("DEBUG GeminiService: Parse error - ${e.message}")
             e.printStackTrace()
