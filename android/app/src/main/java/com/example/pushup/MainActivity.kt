@@ -235,6 +235,12 @@ fun MiniApp(authViewModel: AuthViewModel = viewModel()) {
                 WorkoutExecutionScreen(
                     workoutId = workoutId,
                     onNavigateBack = { navController.popBackStack() },
+                    onWorkoutFinished = { 
+                        // Navigate to workout list after finishing
+                        navController.navigate(TopDest.Workouts.route) {
+                            popUpTo(TopDest.Workouts.route) { inclusive = false }
+                        }
+                    },
                     authViewModel = authViewModel
                 )
             }

@@ -192,7 +192,7 @@ fun StatisticItem(label: String, value: String) {
 fun WorkoutSessionCard(session: WorkoutSession) {
     val dateFormat = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault())
     val totalSets = session.exerciseSessions.sumOf { it.sets.size }
-    val totalVolume = session.exerciseSessions.sumOf { exercise ->
+    session.exerciseSessions.sumOf { exercise ->
         exercise.sets.sumOf { it.reps * it.weight }
     }
     
@@ -238,7 +238,6 @@ fun WorkoutSessionCard(session: WorkoutSession) {
             ) {
                 SessionStat("Exercises", session.exerciseSessions.size.toString())
                 SessionStat("Sets", totalSets.toString())
-                SessionStat("Volume", String.format("%.0f kg", totalVolume))
                 SessionStat("Duration", formatDuration(session.totalDuration))
             }
             

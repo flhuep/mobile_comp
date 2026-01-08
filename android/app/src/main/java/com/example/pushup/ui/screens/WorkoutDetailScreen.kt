@@ -297,8 +297,9 @@ fun ExerciseItemCardWithSets(
                             text = "Set ${set.setNumber}:",
                             style = MaterialTheme.typography.bodySmall
                         )
+                        val weightText = if (exercise.usesWeight) " × ${set.targetWeight} kg" else ""
                         Text(
-                            text = "${set.targetReps} reps × ${set.targetWeight} kg (${set.restTime}s rest)",
+                            text = "${set.targetReps} reps$weightText (${set.restTime}s rest)",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -359,13 +360,15 @@ fun EditSetsDialog(
                                 singleLine = true
                             )
 
-                            OutlinedTextField(
-                                value = weight,
-                                onValueChange = { weight = it },
-                                label = { Text("Weight") },
-                                modifier = Modifier.weight(1f),
-                                singleLine = true
-                            )
+                            if (exercise.usesWeight) {
+                                OutlinedTextField(
+                                    value = weight,
+                                    onValueChange = { weight = it },
+                                    label = { Text("Weight") },
+                                    modifier = Modifier.weight(1f),
+                                    singleLine = true
+                                )
+                            }
 
                             OutlinedTextField(
                                 value = restTime,
@@ -381,7 +384,11 @@ fun EditSetsDialog(
                         Button(
                             onClick = {
                                 val repsInt = reps.toIntOrNull() ?: 0
-                                val weightDouble = weight.toDoubleOrNull() ?: 0.0
+                                val weightDouble = if (exercise.usesWeight) {
+                                    weight.toDoubleOrNull() ?: 0.0
+                                } else {
+                                    0.0
+                                }
                                 val restInt = restTime.toIntOrNull() ?: 60
 
                                 if (repsInt > 0) {
@@ -391,7 +398,8 @@ fun EditSetsDialog(
                                         targetWeight = weightDouble,
                                         restTime = restInt
                                     )
-                                    sets.add(newSet)
+                                    // Create new list to trigger recomposition
+                                    sets = (sets + newSet).toMutableList()
                                     reps = ""
                                     weight = ""
                                     restTime = "150"
@@ -444,19 +452,19 @@ fun EditSetsDialog(
 
                                     Spacer(modifier = Modifier.width(8.dp))
 
+                                    val weightText = if (exercise.usesWeight) " × ${set.targetWeight} kg" else ""
                                     Text(
-                                        text = "${set.targetReps} reps × ${set.targetWeight} kg (${set.restTime}s)",
+                                        text = "${set.targetReps} reps$weightText (${set.restTime}s)",
                                         style = MaterialTheme.typography.bodyMedium,
                                         modifier = Modifier.weight(1f)
                                     )
 
                                     IconButton(
                                         onClick = {
-                                            sets.removeAt(index)
-                                            // Renumber
-                                            sets = sets.mapIndexed { i, s ->
-                                                s.copy(setNumber = i + 1)
-                                            }.toMutableList()
+                                            // Create new list without the deleted item and renumber
+                                            sets = sets.filterIndexed { i, _ -> i != index }
+                                                .mapIndexed { i, s -> s.copy(setNumber = i + 1) }
+                                                .toMutableList()
                                         }
                                     ) {
                                         Icon(

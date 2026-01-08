@@ -19,6 +19,7 @@ class WorkoutRepository {
     private val db = FirebaseFirestore.getInstance()
     private val workoutsCollection = db.collection("workouts")
     private val exerciseRepository = ExerciseRepository()
+    private val sessionRepository = WorkoutSessionRepository()
 
     /**
      * Add a new workout to Firestore
@@ -70,6 +71,60 @@ class WorkoutRepository {
     suspend fun getWorkoutWithExercises(workoutId: String): WorkoutWithExercises? {
         val workout = getWorkout(workoutId) ?: return null
         val exercises = exerciseRepository.getExercisesByIds(workout.exerciseIds)
+        return WorkoutWithExercises(workout, exercises)
+    }
+
+    /**
+     * Get a workout with its exercises and pre-filled weights from last session
+     * @param workoutId The ID of the workout
+     * @param userId The user ID to get last session for
+     * @return WorkoutWithExercises with weights from last session or null if not found
+     */
+    suspend fun getWorkoutWithExercisesAndLastWeights(workoutId: String, userId: String): WorkoutWithExercises? {
+        val workout = getWorkout(workoutId) ?: return null
+        val exercises = exerciseRepository.getExercisesByIds(workout.exerciseIds)
+        
+        // Get last session for this workout
+        val lastSession = sessionRepository.getLastSessionForWorkout(userId, workoutId)
+        
+        if (lastSession != null) {
+            println("🔄 Applying weights from last session")
+            
+            // Update planned exercises with exact weights from last session
+            val updatedWorkout = workout.copy(
+                plannedExercises = workout.plannedExercises.map { plannedExercise ->
+                    // Find the exercise session from last workout
+                    val lastExerciseSession = lastSession.exerciseSessions.find { 
+                        it.exerciseId == plannedExercise.exerciseId 
+                    }
+                    
+                    if (lastExerciseSession != null && lastExerciseSession.sets.isNotEmpty()) {
+                        println("   💡 Updating weights for ${lastExerciseSession.exerciseName}")
+                        
+                        // Map each planned set to the corresponding set from last session
+                        val updatedSets = plannedExercise.sets.mapIndexed { index, plannedSet ->
+                            val lastSet = lastExerciseSession.sets
+                                .filter { it.completed }
+                                .getOrNull(index)
+                            
+                            if (lastSet != null && lastSet.weight > 0) {
+                                println("      Set ${index + 1}: ${lastSet.weight} kg")
+                                plannedSet.copy(targetWeight = lastSet.weight)
+                            } else {
+                                plannedSet
+                            }
+                        }
+                        
+                        plannedExercise.copy(sets = updatedSets)
+                    } else {
+                        plannedExercise
+                    }
+                }
+            )
+            
+            return WorkoutWithExercises(updatedWorkout, exercises)
+        }
+        
         return WorkoutWithExercises(workout, exercises)
     }
 
@@ -388,8 +443,13 @@ class WorkoutRepository {
                     }?.sortedByDescending { it.createdAt } ?: emptyList()
                     
                     val workoutsWithExercises = workouts.map { workout ->
-                        val exercises = exerciseRepository.getExercisesByIds(workout.exerciseIds)
-                        WorkoutWithExercises(workout, exercises)
+                        // Load with last session weights
+                        getWorkoutWithExercisesAndLastWeights(workout.id, userId) 
+                            ?: run {
+                                // Fallback to normal load if something fails
+                                val exercises = exerciseRepository.getExercisesByIds(workout.exerciseIds)
+                                WorkoutWithExercises(workout, exercises)
+                            }
                     }
                     
                     trySend(workoutsWithExercises)

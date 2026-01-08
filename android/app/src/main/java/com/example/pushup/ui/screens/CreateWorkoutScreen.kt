@@ -120,6 +120,7 @@ fun CreateWorkoutManualScreen(
                         name = name.trim(),
                         description = description.trim(),
                         plannedExercises = emptyList(),
+                        duration = 30,
                         createdAt = System.currentTimeMillis(),
                         isCompleted = false,
                         completedAt = null,

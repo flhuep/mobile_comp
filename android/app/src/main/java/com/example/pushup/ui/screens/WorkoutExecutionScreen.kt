@@ -1,6 +1,5 @@
 package com.example.pushup.ui.screens
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -60,6 +59,7 @@ import com.example.pushup.viewmodels.WorkoutExecutionViewModel
 fun WorkoutExecutionScreen(
     workoutId: String,
     onNavigateBack: () -> Unit,
+    onWorkoutFinished: () -> Unit = onNavigateBack,
     authViewModel: AuthViewModel = viewModel(),
     executionViewModel: WorkoutExecutionViewModel = viewModel()
 ) {
@@ -180,7 +180,7 @@ fun WorkoutExecutionScreen(
                 Button(onClick = {
                     executionViewModel.finishWorkout(userId, finishNotes)
                     showFinishDialog = false
-                    onNavigateBack()
+                    onWorkoutFinished()
                 }) {
                     Text("Save & Finish")
                 }
@@ -466,8 +466,9 @@ fun ActiveWorkoutScreen(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     currentPlannedExercise.sets.forEach { set ->
+                        val weightText = if (currentExercise?.usesWeight == true) " × ${set.targetWeight} kg" else ""
                         Text(
-                            text = "Set ${set.setNumber}: ${set.targetReps} reps × ${set.targetWeight} kg",
+                            text = "Set ${set.setNumber}: ${set.targetReps} reps$weightText",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
@@ -570,15 +571,17 @@ fun ActiveWorkoutScreen(
                                 
                                 Spacer(modifier = Modifier.height(4.dp))
                                 
+                                val targetWeightText = if (currentExercise?.usesWeight == true) " × ${plannedSet.targetWeight} kg" else ""
                                 Text(
-                                    text = "Target: ${plannedSet.targetReps} reps × ${plannedSet.targetWeight} kg",
+                                    text = "Target: ${plannedSet.targetReps} reps$targetWeightText",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 
                                 if (completedSet != null) {
+                                    val doneWeightText = if (currentExercise?.usesWeight == true) " × ${completedSet.weight} kg" else ""
                                     Text(
-                                        text = "Done: ${completedSet.reps} reps × ${completedSet.weight} kg",
+                                        text = "Done: ${completedSet.reps} reps$doneWeightText",
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -623,13 +626,16 @@ fun ActiveWorkoutScreen(
                     
                     // Edit/Complete Dialog
                     if (showEditDialog) {
+                        val usesWeight = currentExercise?.usesWeight == true
+                        val targetWeightText = if (usesWeight) " × ${plannedSet.targetWeight} kg" else ""
+                        
                         AlertDialog(
                             onDismissRequest = { showEditDialog = false },
                             title = { Text("Set ${index + 1}") },
                             text = {
                                 Column {
                                     Text(
-                                        text = "Target: ${plannedSet.targetReps} reps × ${plannedSet.targetWeight} kg",
+                                        text = "Target: ${plannedSet.targetReps} reps$targetWeightText",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -641,21 +647,27 @@ fun ActiveWorkoutScreen(
                                         singleLine = true,
                                         modifier = Modifier.fillMaxWidth()
                                     )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    OutlinedTextField(
-                                        value = editWeight,
-                                        onValueChange = { editWeight = it },
-                                        label = { Text("Actual Weight (kg)") },
-                                        singleLine = true,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
+                                    if (usesWeight) {
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        OutlinedTextField(
+                                            value = editWeight,
+                                            onValueChange = { editWeight = it },
+                                            label = { Text("Actual Weight (kg)") },
+                                            singleLine = true,
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                    }
                                 }
                             },
                             confirmButton = {
                                 Button(
                                     onClick = {
                                         val repsInt = editReps.toIntOrNull() ?: plannedSet.targetReps
-                                        val weightDouble = editWeight.toDoubleOrNull() ?: plannedSet.targetWeight
+                                        val weightDouble = if (usesWeight) {
+                                            editWeight.toDoubleOrNull() ?: plannedSet.targetWeight
+                                        } else {
+                                            0.0
+                                        }
                                         
                                         if (completedSet != null) {
                                             // Update existing set

@@ -135,4 +135,26 @@ class WorkoutSessionRepository {
             null
         }
     }
+
+    /**
+     * Get the most recent completed session for a specific workout
+     * @param userId The user ID
+     * @param workoutId The workout ID
+     * @return The most recent session for that workout or null
+     */
+    suspend fun getLastSessionForWorkout(userId: String, workoutId: String): WorkoutSession? {
+        return try {
+            val snapshot = sessionsCollection
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("workoutId", workoutId)
+                .orderBy("startTime", Query.Direction.DESCENDING)
+                .limit(1)
+                .get()
+                .await()
+            snapshot.toObjects(WorkoutSession::class.java).firstOrNull()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
 }

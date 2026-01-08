@@ -53,7 +53,7 @@ class GeminiService {
             println("🚀 DEBUG GeminiService: Response text length: ${responseText.length}")
             println("🚀 DEBUG GeminiService: Response preview: ${responseText.take(200)}...")
             
-            parseWorkoutResponse(responseText, availableExercises)
+            parseWorkoutResponse(responseText, availableExercises, duration)
         } catch (e: Exception) {
             println("🚀 DEBUG GeminiService: Exception - ${e.javaClass.simpleName}: ${e.message}")
             e.printStackTrace()
@@ -116,7 +116,8 @@ Note: Weight is in kg. Use 0 for bodyweight exercises.
 
     private fun parseWorkoutResponse(
         responseText: String,
-        availableExercises: List<Exercise>
+        availableExercises: List<Exercise>,
+        duration: Int
     ): Result<WorkoutGenerationResult> {
         return try {
             println("DEBUG GeminiService: Parsing AI response...")
@@ -185,6 +186,7 @@ Note: Weight is in kg. Use 0 for bodyweight exercises.
                 name = name,
                 description = description,
                 plannedExercises = plannedExercises,
+                duration = duration,
                 createdAt = System.currentTimeMillis(),
                 isCompleted = false,
                 completedAt = null,

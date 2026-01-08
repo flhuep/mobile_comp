@@ -14,6 +14,7 @@ import com.google.firebase.firestore.DocumentId
  * @property difficulty Difficulty level (e.g., "Beginner", "Intermediate", "Advanced")
  * @property imageUrl Optional URL to an image or video
  * @property userId User ID who created this exercise (empty string "" = public/pre-made, filled = private/user-created)
+ * @property usesWeight Whether this exercise uses external weight (false for bodyweight exercises like push-ups, jumping jacks)
  * @property createdAt Timestamp when the exercise was created
  */
 data class Exercise(
@@ -27,6 +28,7 @@ data class Exercise(
     val difficulty: String = "Beginner",
     val imageUrl: String = "",
     val userId: String = "",
+    val usesWeight: Boolean = true, // default true for backward compatibility
     val createdAt: Long = System.currentTimeMillis()
 ) {
     /**

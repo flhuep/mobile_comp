@@ -64,38 +64,9 @@ class WorkoutExecutionViewModel : ViewModel() {
                 _isLoading.value = true
                 _error.value = null
                 
-                val workoutWithExercises = workoutRepository.getWorkoutWithExercises(workoutId)
+                // Load workout with last session weights already applied
+                val workoutWithExercises = workoutRepository.getWorkoutWithExercisesAndLastWeights(workoutId, userId)
                 _workout.value = workoutWithExercises
-                
-                if (workoutWithExercises != null) {
-                    // Get exercise IDs
-                    val exerciseIds = workoutWithExercises.workout.plannedExercises.map { it.exerciseId }
-                    
-                    // Load progress for all exercises
-                    println("📊 Loading exercise progress for user...")
-                    val progressMap = progressRepository.getProgressForExercises(userId, exerciseIds)
-                    println("📊 Loaded progress for ${progressMap.size} exercises")
-                    
-                    // Update planned exercises with last used weights
-                    val updatedWorkout = workoutWithExercises.workout.copy(
-                        plannedExercises = workoutWithExercises.workout.plannedExercises.map { plannedExercise ->
-                            val progress = progressMap[plannedExercise.exerciseId]
-                            if (progress != null && progress.lastUsedWeight > 0) {
-                                println("💡 Pre-filling weight for ${plannedExercise.exerciseId}: ${progress.lastUsedWeight} kg")
-                                // Update target weights based on last used
-                                plannedExercise.copy(
-                                    sets = plannedExercise.sets.map { set ->
-                                        set.copy(targetWeight = progress.lastUsedWeight)
-                                    }
-                                )
-                            } else {
-                                plannedExercise
-                            }
-                        }
-                    )
-                    
-                    _workout.value = workoutWithExercises.copy(workout = updatedWorkout)
-                }
                 
                 // Initialize exercise sessions based on planned exercises
                 _exerciseSessions.value = workoutWithExercises?.workout?.plannedExercises?.map { plannedExercise ->
