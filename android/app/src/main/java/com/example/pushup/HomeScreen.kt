@@ -17,14 +17,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
@@ -65,7 +66,6 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    vm: CounterViewModel,
     navController: NavController = rememberNavController(),
     authViewModel: AuthViewModel = viewModel(),
     planViewModel: WorkoutPlanViewModel = viewModel(),
@@ -109,7 +109,7 @@ fun HomeScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = { userId?.let { planViewModel.previousWeek(it) } }) {
-                Icon(Icons.Default.ArrowBack, "Previous week")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Previous week")
             }
             
             Text(
@@ -119,7 +119,7 @@ fun HomeScreen(
             )
             
             IconButton(onClick = { userId?.let { planViewModel.nextWeek(it) } }) {
-                Icon(Icons.Default.ArrowForward, "Next week")
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, "Next week")
             }
         }
         
@@ -374,7 +374,7 @@ fun AddPlanDialog(
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor()
+                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                     )
                     
                     ExposedDropdownMenu(
@@ -444,7 +444,7 @@ fun isSameDay(date1: Long, date2: Long): Boolean {
 fun PreviewHomeScreen() {
     MaterialTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
-            HomeScreen(vm = viewModel()) // preview-only instance
+            HomeScreen() // preview-only instance
         }
     }
 }

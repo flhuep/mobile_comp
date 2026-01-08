@@ -127,9 +127,6 @@ private enum class TopDest(val route: String, val label: String) {
 fun MiniApp(authViewModel: AuthViewModel = viewModel()) {
     val navController = rememberNavController()
 
-    // Shared ViewModel instance for all destinations:
-    val vm: CounterViewModel = viewModel()
-
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: TopDest.Home.route
     val tabs = listOf(TopDest.Home, TopDest.Workouts, TopDest.Exercises, TopDest.Statistic)
@@ -212,7 +209,7 @@ fun MiniApp(authViewModel: AuthViewModel = viewModel()) {
             startDestination = TopDest.Home.route,
             modifier = Modifier.padding(padding)
         ) {
-            composable(TopDest.Home.route) { HomeScreen(vm, navController) }
+            composable(TopDest.Home.route) { HomeScreen(navController) }
             composable(TopDest.Workouts.route) { WorkoutScreen(navController) }
             composable(TopDest.Exercises.route) { ExerciseScreen() }
             composable(TopDest.Statistic.route) { StatisticScreen() }
