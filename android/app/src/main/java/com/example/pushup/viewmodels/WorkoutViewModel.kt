@@ -90,6 +90,27 @@ class WorkoutViewModel : ViewModel() {
     }
 
     /**
+     * Delete a workout
+     */
+    fun deleteWorkout(workoutId: String, callback: (Boolean, String?) -> Unit) {
+        val userId = currentUserId
+        if (userId == null) {
+            callback(false, "User not logged in")
+            return
+        }
+        
+        viewModelScope.launch {
+            try {
+                workoutRepository.deleteWorkout(workoutId)
+                userRepository.removeWorkoutFromUser(userId, workoutId)
+                callback(true, null)
+            } catch (e: Exception) {
+                callback(false, e.message)
+            }
+        }
+    }
+
+    /**
      * Generate a workout using AI
      */
     fun generateWorkoutWithAI(
