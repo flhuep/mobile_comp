@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -136,6 +137,9 @@ fun HomeScreen(
             onPlanClick = { plan ->
                 // Navigate to workout execution
                 navController.navigate("workoutExecution/${plan.workoutId}")
+            },
+            onDeletePlan = { plan ->
+                planViewModel.deletePlan(plan.id)
             }
         )
     }
@@ -172,7 +176,8 @@ fun WeekCalendar(
     weekStartDate: Long,
     plans: List<WorkoutPlan>,
     onDayClick: (Long) -> Unit,
-    onPlanClick: (WorkoutPlan) -> Unit
+    onPlanClick: (WorkoutPlan) -> Unit,
+    onDeletePlan: (WorkoutPlan) -> Unit
 ) {
     val calendar = Calendar.getInstance()
     val dayNames = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
@@ -218,7 +223,8 @@ fun WeekCalendar(
                     date = dayDate,
                     plans = dayPlans,
                     onAddClick = { onDayClick(dayDate) },
-                    onPlanClick = onPlanClick
+                    onPlanClick = onPlanClick,
+                    onDeletePlan = onDeletePlan
                 )
             }
         }
@@ -231,7 +237,8 @@ fun DayCard(
     date: Long,
     plans: List<WorkoutPlan>,
     onAddClick: () -> Unit,
-    onPlanClick: (WorkoutPlan) -> Unit
+    onPlanClick: (WorkoutPlan) -> Unit,
+    onDeletePlan: (WorkoutPlan) -> Unit
 ) {
     val dateFormat = SimpleDateFormat("EEE, MMM d", Locale.getDefault())
     val isToday = isSameDay(date, System.currentTimeMillis())
@@ -284,7 +291,8 @@ fun DayCard(
                 plans.forEach { plan ->
                     PlanItem(
                         plan = plan,
-                        onClick = { onPlanClick(plan) }
+                        onClick = { onPlanClick(plan) },
+                        onDelete = { onDeletePlan(plan) }
                     )
                 }
             }
@@ -295,7 +303,8 @@ fun DayCard(
 @Composable
 fun PlanItem(
     plan: WorkoutPlan,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onDelete: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -331,6 +340,18 @@ fun PlanItem(
                 text = "✓",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.Green
+            )
+        }
+        
+        IconButton(
+            onClick = onDelete,
+            modifier = Modifier.size(32.dp)
+        ) {
+            Icon(
+                Icons.Default.Delete,
+                contentDescription = "Delete workout",
+                modifier = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.error
             )
         }
     }

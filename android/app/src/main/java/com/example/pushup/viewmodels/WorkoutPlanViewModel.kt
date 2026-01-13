@@ -85,6 +85,20 @@ class WorkoutPlanViewModel : ViewModel() {
     }
 
     /**
+     * Delete a workout plan
+     */
+    fun deletePlan(planId: String) {
+        viewModelScope.launch {
+            try {
+                planRepository.deletePlan(planId)
+            } catch (e: Exception) {
+                Log.e("WorkoutPlanViewModel", "Error deleting plan", e)
+                _error.value = "Failed to delete plan: ${e.message}"
+            }
+        }
+    }
+
+    /**
      * Navigate to previous week
      */
     fun previousWeek(userId: String) {
