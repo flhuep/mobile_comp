@@ -52,38 +52,6 @@ class WorkoutPlanRepository {
     }
 
     /**
-     * Get all plans for a specific date
-     */
-    suspend fun getPlansForDate(userId: String, date: Long): List<WorkoutPlan> {
-        // Get start and end of the day
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = date
-        calendar.set(Calendar.HOUR_OF_DAY, 0)
-        calendar.set(Calendar.MINUTE, 0)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-        val startOfDay = calendar.timeInMillis
-        
-        calendar.set(Calendar.HOUR_OF_DAY, 23)
-        calendar.set(Calendar.MINUTE, 59)
-        calendar.set(Calendar.SECOND, 59)
-        calendar.set(Calendar.MILLISECOND, 999)
-        val endOfDay = calendar.timeInMillis
-        
-        return try {
-            val snapshot = plansCollection
-                .whereEqualTo("userId", userId)
-                .whereGreaterThanOrEqualTo("scheduledDate", startOfDay)
-                .whereLessThanOrEqualTo("scheduledDate", endOfDay)
-                .get()
-                .await()
-            snapshot.toObjects(WorkoutPlan::class.java)
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    /**
      * Update a workout plan
      */
     suspend fun updatePlan(planId: String, updates: Map<String, Any>) {
@@ -92,19 +60,6 @@ class WorkoutPlanRepository {
         } catch (e: Exception) {
             throw e
         }
-    }
-
-    /**
-     * Mark a plan as completed
-     */
-    suspend fun completePlan(planId: String, sessionId: String) {
-        updatePlan(
-            planId,
-            mapOf(
-                "isCompleted" to true,
-                "completedSessionId" to sessionId
-            )
-        )
     }
 
     /**

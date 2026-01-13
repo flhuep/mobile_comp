@@ -22,8 +22,7 @@ class AuthViewModel : ViewModel() {
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
     
     private val _currentUser = MutableStateFlow<FirebaseUser?>(null)
-    val currentUser: StateFlow<FirebaseUser?> = _currentUser.asStateFlow()
-    
+
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
     

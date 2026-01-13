@@ -33,11 +33,9 @@ class WorkoutExecutionViewModel : ViewModel() {
 
     // Current exercise sessions (tracking sets and reps)
     private val _exerciseSessions = MutableStateFlow<List<ExerciseSession>>(emptyList())
-    val exerciseSessions: StateFlow<List<ExerciseSession>> = _exerciseSessions.asStateFlow()
 
     // Start time of the workout
     private val _startTime = MutableStateFlow<Long?>(null)
-    val startTime: StateFlow<Long?> = _startTime.asStateFlow()
 
     // Is workout active
     private val _isWorkoutActive = MutableStateFlow(false)
@@ -149,22 +147,6 @@ class WorkoutExecutionViewModel : ViewModel() {
         
         // Start rest timer
         startRestTimer(restTime)
-    }
-
-    /**
-     * Update a set
-     */
-    fun updateSet(setIndex: Int, reps: Int, weight: Double) {
-        val exerciseIndex = _currentExerciseIndex.value
-        val sessions = _exerciseSessions.value.toMutableList()
-        val currentSession = sessions.getOrNull(exerciseIndex) ?: return
-        
-        val sets = currentSession.sets.toMutableList()
-        if (setIndex < sets.size) {
-            sets[setIndex] = sets[setIndex].copy(reps = reps, weight = weight)
-            sessions[exerciseIndex] = currentSession.copy(sets = sets)
-            _exerciseSessions.value = sessions
-        }
     }
 
     /**
@@ -297,22 +279,4 @@ class WorkoutExecutionViewModel : ViewModel() {
         _startTime.value = null
     }
 
-    /**
-     * Clear error
-     */
-    fun clearError() {
-        _error.value = null
-    }
-
-    /**
-     * Get workout progress (percentage of exercises completed)
-     */
-    fun getProgress(): Float {
-        val workout = _workout.value ?: return 0f
-        val totalExercises = workout.workout.plannedExercises.size
-        if (totalExercises == 0) return 0f
-        
-        val completedExercises = _exerciseSessions.value.count { it.sets.isNotEmpty() }
-        return completedExercises.toFloat() / totalExercises.toFloat()
-    }
 }

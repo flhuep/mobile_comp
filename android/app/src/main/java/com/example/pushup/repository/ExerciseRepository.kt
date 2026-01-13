@@ -60,14 +60,6 @@ class ExerciseRepository {
     }
 
     /**
-     * Update an existing exercise
-     * @param exercise The exercise to update
-     */
-    suspend fun updateExercise(exercise: Exercise) {
-        exercisesCollection.document(exercise.id).set(exercise).await()
-    }
-
-    /**
      * Delete an exercise
      * @param exerciseId The ID of the exercise to delete
      */
@@ -101,84 +93,6 @@ class ExerciseRepository {
         return try {
             exerciseIds.mapNotNull { id ->
                 getExercise(id)
-            }
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    /**
-     * Get all exercises as a Flow (real-time updates)
-     * @return Flow of exercise lists
-     */
-    fun getAllExercisesFlow(): Flow<List<Exercise>> = callbackFlow {
-        val listener = exercisesCollection
-            .orderBy("name", Query.Direction.ASCENDING)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    close(error)
-                    return@addSnapshotListener
-                }
-                
-                val exercises = snapshot?.documents?.mapNotNull { doc ->
-                    mapDocToExercise(doc)
-                } ?: emptyList()
-                
-                trySend(exercises)
-            }
-        
-        awaitClose { listener.remove() }
-    }
-
-    /**
-     * Get all exercises (one-time fetch)
-     * @return List of all exercises
-     */
-    suspend fun getAllExercises(): List<Exercise> {
-        return try {
-            val snapshot = exercisesCollection
-                .orderBy("name", Query.Direction.ASCENDING)
-                .get()
-                .await()
-            snapshot.documents.mapNotNull { doc ->
-                mapDocToExercise(doc)
-            }
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    /**
-     * Get exercises by category
-     * @param category The category to filter by
-     * @return List of exercises in that category
-     */
-    suspend fun getExercisesByCategory(category: String): List<Exercise> {
-        return try {
-            val snapshot = exercisesCollection
-                .whereEqualTo("category", category)
-                .orderBy("name", Query.Direction.ASCENDING)
-                .get()
-                .await()
-            snapshot.documents.mapNotNull { doc ->
-                mapDocToExercise(doc)
-            }
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    /**
-     * Search exercises by name
-     * @param searchQuery The search query
-     * @return List of matching exercises
-     */
-    suspend fun searchExercises(searchQuery: String): List<Exercise> {
-        return try {
-            val allExercises = getAllExercises()
-            allExercises.filter { exercise ->
-                exercise.name.contains(searchQuery, ignoreCase = true) ||
-                exercise.description.contains(searchQuery, ignoreCase = true)
             }
         } catch (e: Exception) {
             emptyList()
@@ -304,18 +218,5 @@ class ExerciseRepository {
             userId = userId
         )
         return addExercise(userExercise)
-    }
-
-    /**
-     * Create a public exercise (admin function)
-     * Public exercises have empty userId
-     * @param exercise The exercise to create
-     * @return The ID of the created exercise
-     */
-    suspend fun createPublicExercise(exercise: Exercise): String {
-        val publicExercise = exercise.copy(
-            userId = ""
-        )
-        return addExercise(publicExercise)
     }
 }

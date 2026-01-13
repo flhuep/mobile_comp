@@ -88,32 +88,7 @@ class WorkoutViewModel : ViewModel() {
             }
         }
     }
-    
-    /**
-     * Create a new workout
-     */
-    fun createWorkout(name: String, description: String, exerciseIds: List<String>, duration: Int) {
-        val userId = currentUserId ?: return
-        
-        viewModelScope.launch {
-            try {
-                val workout = Workout(
-                    name = name,
-                    description = description,
-                    plannedExercises = emptyList(),
-                    createdAt = System.currentTimeMillis(),
-                    isCompleted = false,
-                    completedAt = null,
-                    userId = userId
-                )
-                val workoutId = workoutRepository.createUserWorkout(userId, workout)
-                userRepository.addWorkoutToUser(userId, workoutId)
-            } catch (e: Exception) {
-                _error.value = "Failed to create workout: ${e.message}"
-            }
-        }
-    }
-    
+
     /**
      * Generate a workout using AI
      */
@@ -183,36 +158,7 @@ class WorkoutViewModel : ViewModel() {
             }
         }
     }
-    
-    /**
-     * Delete a workout
-     */
-    fun deleteWorkout(workoutId: String) {
-        val userId = currentUserId ?: return
-        
-        viewModelScope.launch {
-            try {
-                workoutRepository.deleteWorkout(workoutId)
-                userRepository.removeWorkoutFromUser(userId, workoutId)
-            } catch (e: Exception) {
-                _error.value = "Failed to delete workout: ${e.message}"
-            }
-        }
-    }
-    
-    /**
-     * Mark a workout as completed
-     */
-    fun completeWorkout(workoutId: String) {
-        viewModelScope.launch {
-            try {
-                workoutRepository.markWorkoutCompleted(workoutId)
-            } catch (e: Exception) {
-                _error.value = "Failed to complete workout: ${e.message}"
-            }
-        }
-    }
-    
+
     /**
      * Add an exercise to a workout
      */
@@ -248,38 +194,6 @@ class WorkoutViewModel : ViewModel() {
                 workoutRepository.updatePlannedSets(workoutId, exerciseId, sets)
             } catch (e: Exception) {
                 _error.value = "Failed to update sets: ${e.message}"
-            }
-        }
-    }
-    
-    /**
-     * Add a set to an exercise in a workout
-     */
-    fun addSetToExercise(
-        workoutId: String,
-        exerciseId: String,
-        targetReps: Int,
-        targetWeight: Double,
-        restTime: Int = 60
-    ) {
-        viewModelScope.launch {
-            try {
-                workoutRepository.addSetToExercise(workoutId, exerciseId, targetReps, targetWeight, restTime)
-            } catch (e: Exception) {
-                _error.value = "Failed to add set: ${e.message}"
-            }
-        }
-    }
-    
-    /**
-     * Remove a set from an exercise in a workout
-     */
-    fun removeSetFromExercise(workoutId: String, exerciseId: String, setIndex: Int) {
-        viewModelScope.launch {
-            try {
-                workoutRepository.removeSetFromExercise(workoutId, exerciseId, setIndex)
-            } catch (e: Exception) {
-                _error.value = "Failed to remove set: ${e.message}"
             }
         }
     }

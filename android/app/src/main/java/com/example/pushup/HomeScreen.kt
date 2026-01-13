@@ -84,7 +84,6 @@ fun HomeScreen(
     LaunchedEffect(userId) {
         if (userId != null && !hasLoadedInitially) {
             planViewModel.loadWeekPlans(userId)
-            hasLoadedInitially = true
         }
     }
     
@@ -145,7 +144,7 @@ fun HomeScreen(
         AddPlanDialog(
             date = selectedDate,
             workouts = workouts,
-            onDismiss = { showAddPlanDialog = false },
+            onDismiss = { },
             onConfirm = { workoutId, workoutName ->
                 val plan = WorkoutPlan(
                     userId = userId,
@@ -155,7 +154,7 @@ fun HomeScreen(
                 )
                 planViewModel.createPlan(
                     plan,
-                    onSuccess = { showAddPlanDialog = false },
+                    onSuccess = { },
                     onError = { /* handle error */ }
                 )
             }

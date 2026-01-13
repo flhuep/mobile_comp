@@ -83,22 +83,7 @@ class WorkoutPlanViewModel : ViewModel() {
             }
         }
     }
-    
-    /**
-     * Delete a workout plan
-     */
-    fun deletePlan(planId: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        viewModelScope.launch {
-            try {
-                planRepository.deletePlan(planId)
-                onSuccess()
-            } catch (e: Exception) {
-                Log.e("WorkoutPlanViewModel", "Error deleting plan", e)
-                onError(e.message ?: "Failed to delete plan")
-            }
-        }
-    }
-    
+
     /**
      * Navigate to previous week
      */
@@ -114,30 +99,7 @@ class WorkoutPlanViewModel : ViewModel() {
         val newWeekStart = _currentWeekStart.value + (7 * 24 * 60 * 60 * 1000L)
         loadWeekPlans(userId, newWeekStart)
     }
-    
-    /**
-     * Get plans for a specific date from the current week plans
-     */
-    fun getPlansForDate(date: Long): List<WorkoutPlan> {
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = date
-        calendar.set(Calendar.HOUR_OF_DAY, 0)
-        calendar.set(Calendar.MINUTE, 0)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-        val startOfDay = calendar.timeInMillis
-        
-        calendar.set(Calendar.HOUR_OF_DAY, 23)
-        calendar.set(Calendar.MINUTE, 59)
-        calendar.set(Calendar.SECOND, 59)
-        calendar.set(Calendar.MILLISECOND, 999)
-        val endOfDay = calendar.timeInMillis
-        
-        return _weekPlans.value.filter { plan ->
-            plan.scheduledDate in startOfDay..endOfDay
-        }
-    }
-    
+
     companion object {
         /**
          * Get the start of the week (Monday at 00:00:00) for a given date

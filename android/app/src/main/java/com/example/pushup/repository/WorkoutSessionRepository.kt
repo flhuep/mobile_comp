@@ -28,48 +28,6 @@ class WorkoutSessionRepository {
     }
 
     /**
-     * Update an existing workout session
-     * @param session The session to update
-     */
-    suspend fun updateSession(session: WorkoutSession) {
-        if (session.id.isNotEmpty()) {
-            sessionsCollection.document(session.id).set(session).await()
-        }
-    }
-
-    /**
-     * Get a single workout session by ID
-     * @param sessionId The ID of the session
-     * @return The session or null if not found
-     */
-    suspend fun getSession(sessionId: String): WorkoutSession? {
-        return try {
-            val snapshot = sessionsCollection.document(sessionId).get().await()
-            snapshot.toObject(WorkoutSession::class.java)
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    /**
-     * Get all workout sessions for a user
-     * @param userId The user ID
-     * @return List of workout sessions
-     */
-    suspend fun getUserSessions(userId: String): List<WorkoutSession> {
-        return try {
-            val snapshot = sessionsCollection
-                .whereEqualTo("userId", userId)
-                .orderBy("startTime", Query.Direction.DESCENDING)
-                .get()
-                .await()
-            snapshot.toObjects(WorkoutSession::class.java)
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    /**
      * Get workout sessions for a user as a Flow (real-time updates)
      * @param userId The user ID
      * @return Flow of workout sessions
@@ -89,51 +47,6 @@ class WorkoutSessionRepository {
             }
         
         awaitClose { listener.remove() }
-    }
-
-    /**
-     * Get workout sessions for a specific workout
-     * @param workoutId The workout ID
-     * @return List of sessions for that workout
-     */
-    suspend fun getSessionsForWorkout(workoutId: String): List<WorkoutSession> {
-        return try {
-            val snapshot = sessionsCollection
-                .whereEqualTo("workoutId", workoutId)
-                .orderBy("startTime", Query.Direction.DESCENDING)
-                .get()
-                .await()
-            snapshot.toObjects(WorkoutSession::class.java)
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    /**
-     * Delete a workout session
-     * @param sessionId The ID of the session to delete
-     */
-    suspend fun deleteSession(sessionId: String) {
-        sessionsCollection.document(sessionId).delete().await()
-    }
-
-    /**
-     * Get the most recent workout session for a user
-     * @param userId The user ID
-     * @return The most recent session or null
-     */
-    suspend fun getMostRecentSession(userId: String): WorkoutSession? {
-        return try {
-            val snapshot = sessionsCollection
-                .whereEqualTo("userId", userId)
-                .orderBy("startTime", Query.Direction.DESCENDING)
-                .limit(1)
-                .get()
-                .await()
-            snapshot.toObjects(WorkoutSession::class.java).firstOrNull()
-        } catch (e: Exception) {
-            null
-        }
     }
 
     /**

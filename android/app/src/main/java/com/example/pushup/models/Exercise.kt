@@ -28,7 +28,7 @@ data class Exercise(
     val difficulty: String = "Beginner",
     val imageUrl: String = "",
     val userId: String = "",
-    val usesWeight: Boolean = true, // default true for backward compatibility
+    val usesWeight: Boolean = true,
     val createdAt: Long = System.currentTimeMillis()
 ) {
     /**

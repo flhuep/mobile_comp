@@ -81,46 +81,4 @@ class ExerciseProgressRepository {
             e.printStackTrace()
         }
     }
-
-    /**
-     * Get all progress records for a user
-     * @param userId User ID
-     * @return List of ExerciseProgress
-     */
-    suspend fun getAllProgressForUser(userId: String): List<ExerciseProgress> {
-        return try {
-            val snapshot = progressCollection
-                .whereEqualTo("userId", userId)
-                .get()
-                .await()
-            
-            snapshot.toObjects(ExerciseProgress::class.java)
-        } catch (e: Exception) {
-            println("❌ Error loading user progress: ${e.message}")
-            emptyList()
-        }
-    }
-
-    /**
-     * Get progress for multiple exercises at once
-     * @param userId User ID
-     * @param exerciseIds List of exercise IDs
-     * @return Map of exerciseId to ExerciseProgress
-     */
-    suspend fun getProgressForExercises(
-        userId: String,
-        exerciseIds: List<String>
-    ): Map<String, ExerciseProgress> {
-        if (exerciseIds.isEmpty()) return emptyMap()
-        
-        return try {
-            val allProgress = getAllProgressForUser(userId)
-            allProgress
-                .filter { it.exerciseId in exerciseIds }
-                .associateBy { it.exerciseId }
-        } catch (e: Exception) {
-            println("❌ Error loading exercise progress: ${e.message}")
-            emptyMap()
-        }
-    }
 }

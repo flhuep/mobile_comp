@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pushup.models.Exercise
 import com.example.pushup.repository.ExerciseRepository
-import com.example.pushup.repository.UserRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +16,6 @@ import kotlinx.coroutines.launch
  */
 class ExerciseViewModel : ViewModel() {
     private val exerciseRepository = ExerciseRepository()
-    private val userRepository = UserRepository()
     private val auth = FirebaseAuth.getInstance()
     
     // Get current user ID from Firebase Auth
@@ -105,104 +103,5 @@ class ExerciseViewModel : ViewModel() {
             }
         }
     }
-    
-    /**
-     * Create a custom exercise
-     */
-    fun createCustomExercise(
-        name: String,
-        description: String,
-        category: String,
-        muscleGroup: String,
-        equipment: String,
-        difficulty: String
-    ) {
-        val userId = currentUserId ?: return
-        
-        viewModelScope.launch {
-            try {
-                val exercise = Exercise(
-                    name = name,
-                    description = description,
-                    category = category,
-                    muscleGroup = muscleGroup,
-                    equipment = equipment,
-                    difficulty = difficulty,
-                    userId = userId
-                )
-                exerciseRepository.createUserExercise(userId, exercise)
-            } catch (e: Exception) {
-                _error.value = "Failed to create exercise: ${e.message}"
-            }
-        }
-    }
-    
-    /**
-     * Delete a custom exercise (only if it belongs to the user)
-     */
-    fun deleteExercise(exerciseId: String) {
-        val userId = currentUserId ?: return
-        
-        viewModelScope.launch {
-            try {
-                val exercise = exerciseRepository.getExercise(exerciseId)
-                if (exercise?.userId == userId) {
-                    exerciseRepository.deleteExercise(exerciseId)
-                } else {
-                    _error.value = "Cannot delete this exercise"
-                }
-            } catch (e: Exception) {
-                _error.value = "Failed to delete exercise: ${e.message}"
-            }
-        }
-    }
-    
-    /**
-     * Add exercise to favorites
-     */
-    fun addToFavorites(exerciseId: String) {
-        val userId = currentUserId ?: return
-        
-        viewModelScope.launch {
-            try {
-                userRepository.addFavoriteExercise(userId, exerciseId)
-            } catch (e: Exception) {
-                _error.value = "Failed to add to favorites: ${e.message}"
-            }
-        }
-    }
-    
-    /**
-     * Remove exercise from favorites
-     */
-    fun removeFromFavorites(exerciseId: String) {
-        val userId = currentUserId ?: return
-        
-        viewModelScope.launch {
-            try {
-                userRepository.removeFavoriteExercise(userId, exerciseId)
-            } catch (e: Exception) {
-                _error.value = "Failed to remove from favorites: ${e.message}"
-            }
-        }
-    }
-    
-    /**
-     * Search exercises
-     */
-    fun searchExercises(query: String) {
-        val userId = currentUserId ?: return
-        
-        viewModelScope.launch {
-            try {
-                val results = exerciseRepository.searchExercises(query)
-                // Filter to only show exercises available to this user
-                _exercises.value = results.filter { exercise ->
-                    exercise.userId.isEmpty() || exercise.userId == userId
-                }
-            } catch (e: Exception) {
-                _error.value = "Search failed: ${e.message}"
-            }
-        }
-    }
+
 }

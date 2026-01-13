@@ -64,17 +64,6 @@ class WorkoutRepository {
     }
 
     /**
-     * Get a workout with its exercises
-     * @param workoutId The ID of the workout
-     * @return WorkoutWithExercises or null if not found
-     */
-    suspend fun getWorkoutWithExercises(workoutId: String): WorkoutWithExercises? {
-        val workout = getWorkout(workoutId) ?: return null
-        val exercises = exerciseRepository.getExercisesByIds(workout.exerciseIds)
-        return WorkoutWithExercises(workout, exercises)
-    }
-
-    /**
      * Get a workout with its exercises and pre-filled weights from last session
      * @param workoutId The ID of the workout
      * @param userId The user ID to get last session for
@@ -129,29 +118,6 @@ class WorkoutRepository {
     }
 
     /**
-     * Get all workouts as a Flow (real-time updates)
-     * @return Flow of workout lists
-     */
-    fun getAllWorkoutsFlow(): Flow<List<Workout>> = callbackFlow {
-        val listener = workoutsCollection
-            .orderBy("createdAt", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    close(error)
-                    return@addSnapshotListener
-                }
-                
-                val workouts = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject(Workout::class.java)
-                } ?: emptyList()
-                
-                trySend(workouts)
-            }
-        
-        awaitClose { listener.remove() }
-    }
-
-    /**
      * Get all workouts (one-time fetch)
      * @return List of all workouts
      */
@@ -167,69 +133,6 @@ class WorkoutRepository {
         } catch (e: Exception) {
             emptyList()
         }
-    }
-
-    /**
-     * Get all workouts with their exercises
-     * @return List of WorkoutWithExercises
-     */
-    suspend fun getAllWorkoutsWithExercises(): List<WorkoutWithExercises> {
-        val workouts = getAllWorkouts()
-        return workouts.map { workout ->
-            val exercises = exerciseRepository.getExercisesByIds(workout.exerciseIds)
-            WorkoutWithExercises(workout, exercises)
-        }
-    }
-
-    /**
-     * Get completed workouts
-     * @return List of completed workouts
-     */
-    suspend fun getCompletedWorkouts(): List<Workout> {
-        return try {
-            val snapshot = workoutsCollection
-                .whereEqualTo("isCompleted", true)
-                .orderBy("completedAt", Query.Direction.DESCENDING)
-                .get()
-                .await()
-            snapshot.documents.mapNotNull { doc ->
-                doc.toObject(Workout::class.java)
-            }
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    /**
-     * Get incomplete workouts
-     * @return List of incomplete workouts
-     */
-    suspend fun getIncompleteWorkouts(): List<Workout> {
-        return try {
-            val snapshot = workoutsCollection
-                .whereEqualTo("isCompleted", false)
-                .orderBy("createdAt", Query.Direction.DESCENDING)
-                .get()
-                .await()
-            snapshot.documents.mapNotNull { doc ->
-                doc.toObject(Workout::class.java)
-            }
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    /**
-     * Mark a workout as completed
-     * @param workoutId The ID of the workout
-     */
-    suspend fun markWorkoutCompleted(workoutId: String) {
-        val workout = getWorkout(workoutId) ?: return
-        val updatedWorkout = workout.copy(
-            isCompleted = true,
-            completedAt = System.currentTimeMillis()
-        )
-        updateWorkout(updatedWorkout)
     }
 
     /**
@@ -286,85 +189,6 @@ class WorkoutRepository {
         val updatedWorkout = workout.copy(plannedExercises = updatedPlannedExercises)
         updateWorkout(updatedWorkout)
     }
-    
-    /**
-     * Add a set to a planned exercise
-     * @param workoutId The ID of the workout
-     * @param exerciseId The ID of the exercise
-     * @param targetReps Target repetitions
-     * @param targetWeight Target weight
-     * @param restTime Rest time in seconds
-     */
-    suspend fun addSetToExercise(
-        workoutId: String, 
-        exerciseId: String, 
-        targetReps: Int, 
-        targetWeight: Double,
-        restTime: Int = 60
-    ) {
-        val workout = getWorkout(workoutId) ?: return
-        val updatedPlannedExercises = workout.plannedExercises.map { plannedExercise ->
-            if (plannedExercise.exerciseId == exerciseId) {
-                val newSetNumber = plannedExercise.sets.size + 1
-                val newSet = PlannedSet(
-                    setNumber = newSetNumber,
-                    targetReps = targetReps,
-                    targetWeight = targetWeight,
-                    restTime = restTime
-                )
-                plannedExercise.copy(sets = plannedExercise.sets + newSet)
-            } else {
-                plannedExercise
-            }
-        }
-        val updatedWorkout = workout.copy(plannedExercises = updatedPlannedExercises)
-        updateWorkout(updatedWorkout)
-    }
-    
-    /**
-     * Remove a set from a planned exercise
-     * @param workoutId The ID of the workout
-     * @param exerciseId The ID of the exercise
-     * @param setIndex Index of the set to remove
-     */
-    suspend fun removeSetFromExercise(workoutId: String, exerciseId: String, setIndex: Int) {
-        val workout = getWorkout(workoutId) ?: return
-        val updatedPlannedExercises = workout.plannedExercises.map { plannedExercise ->
-            if (plannedExercise.exerciseId == exerciseId) {
-                val updatedSets = plannedExercise.sets.toMutableList().apply {
-                    if (setIndex < size) {
-                        removeAt(setIndex)
-                    }
-                }
-                // Renumber sets
-                val renumberedSets = updatedSets.mapIndexed { index, set ->
-                    set.copy(setNumber = index + 1)
-                }
-                plannedExercise.copy(sets = renumberedSets)
-            } else {
-                plannedExercise
-            }
-        }
-        val updatedWorkout = workout.copy(plannedExercises = updatedPlannedExercises)
-        updateWorkout(updatedWorkout)
-    }
-
-    /**
-     * Search workouts by name
-     * @param searchQuery The search query
-     * @return List of matching workouts
-     */
-    suspend fun searchWorkouts(searchQuery: String): List<Workout> {
-        return try {
-            val allWorkouts = getAllWorkouts()
-            allWorkouts.filter { workout ->
-                workout.name.contains(searchQuery, ignoreCase = true) ||
-                workout.description.contains(searchQuery, ignoreCase = true)
-            }
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
 
     /**
      * Get workouts for a specific user
@@ -382,43 +206,6 @@ class WorkoutRepository {
             }.sortedByDescending { it.createdAt }
         } catch (e: Exception) {
             emptyList()
-        }
-    }
-
-    /**
-     * Get workouts for a specific user as a Flow (real-time updates)
-     * @param userId The user ID
-     * @return Flow of user's workouts
-     */
-    fun getUserWorkoutsFlow(userId: String): Flow<List<Workout>> = callbackFlow {
-        val listener = workoutsCollection
-            .whereEqualTo("userId", userId)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    close(error)
-                    return@addSnapshotListener
-                }
-                
-                val workouts = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject(Workout::class.java)
-                }?.sortedByDescending { it.createdAt } ?: emptyList()
-                
-                trySend(workouts)
-            }
-        
-        awaitClose { listener.remove() }
-    }
-
-    /**
-     * Get user's workouts with exercises
-     * @param userId The user ID
-     * @return List of WorkoutWithExercises
-     */
-    suspend fun getUserWorkoutsWithExercises(userId: String): List<WorkoutWithExercises> {
-        val workouts = getUserWorkouts(userId)
-        return workouts.map { workout ->
-            val exercises = exerciseRepository.getExercisesByIds(workout.exerciseIds)
-            WorkoutWithExercises(workout, exercises)
         }
     }
 
@@ -468,45 +255,5 @@ class WorkoutRepository {
     suspend fun createUserWorkout(userId: String, workout: Workout): String {
         val userWorkout = workout.copy(userId = userId)
         return addWorkout(userWorkout)
-    }
-
-    /**
-     * Get user's completed workouts
-     * @param userId The user ID
-     * @return List of completed workouts
-     */
-    suspend fun getUserCompletedWorkouts(userId: String): List<Workout> {
-        return try {
-            val snapshot = workoutsCollection
-                .whereEqualTo("userId", userId)
-                .whereEqualTo("isCompleted", true)
-                .get()
-                .await()
-            snapshot.documents.mapNotNull { doc ->
-                doc.toObject(Workout::class.java)
-            }.sortedByDescending { it.completedAt }
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    /**
-     * Get user's incomplete workouts
-     * @param userId The user ID
-     * @return List of incomplete workouts
-     */
-    suspend fun getUserIncompleteWorkouts(userId: String): List<Workout> {
-        return try {
-            val snapshot = workoutsCollection
-                .whereEqualTo("userId", userId)
-                .whereEqualTo("isCompleted", false)
-                .get()
-                .await()
-            snapshot.documents.mapNotNull { doc ->
-                doc.toObject(Workout::class.java)
-            }.sortedByDescending { it.createdAt }
-        } catch (e: Exception) {
-            emptyList()
-        }
     }
 }
