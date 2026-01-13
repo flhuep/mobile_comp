@@ -227,133 +227,137 @@ fun StartWorkoutScreen(
     workout: com.example.pushup.models.WorkoutWithExercises,
     onStartWorkout: () -> Unit
 ) {
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(
-            text = workout.workout.name,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
-        )
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        Text(
-            text = workout.workout.description,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
+        item {
+            Text(
+                text = workout.workout.name,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
             )
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Workout Overview",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+        }
+        
+        item {
+            Text(
+                text = workout.workout.description,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+        
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("${workout.workout.plannedExercises.size} exercises")
-                Text("Estimated duration: ${workout.workout.duration} minutes")
-                Text("Difficulty: ${workout.workout.difficulty}")
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Workout Overview",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("${workout.workout.plannedExercises.size} exercises")
+                    Text("Estimated duration: ${workout.workout.duration} minutes")
+                    Text("Difficulty: ${workout.workout.difficulty}")
+                }
             }
         }
         
-        Spacer(modifier = Modifier.height(24.dp))
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+        }
         
-        Text(
-            text = "Exercises:",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.align(Alignment.Start)
-        )
+        item {
+            Text(
+                text = "Exercises:",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
         
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            itemsIndexed(workout.workout.plannedExercises) { index, plannedExercise ->
-                val exercise = workout.exercises.find { it.id == plannedExercise.exerciseId }
-                if (exercise != null) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth()
+        itemsIndexed(workout.workout.plannedExercises) { index, plannedExercise ->
+            val exercise = workout.exercises.find { it.id == plannedExercise.exerciseId }
+            if (exercise != null) {
+                Card(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(
+                                        MaterialTheme.colorScheme.primary,
+                                        CircleShape
+                                    ),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(40.dp)
-                                        .background(
-                                            MaterialTheme.colorScheme.primary,
-                                            CircleShape
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "${index + 1}",
-                                        color = MaterialTheme.colorScheme.onPrimary,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                                
-                                Spacer(modifier = Modifier.width(16.dp))
-                                
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = exercise.name,
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        text = exercise.muscleGroup,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
+                                Text(
+                                    text = "${index + 1}",
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
                             
-                            // Show planned sets
-                            if (plannedExercise.sets.isNotEmpty()) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                HorizontalDivider()
-                                Spacer(modifier = Modifier.height(8.dp))
-                                
+                            Spacer(modifier = Modifier.width(16.dp))
+                            
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "${plannedExercise.sets.size} sets planned",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.primary
+                                    text = exercise.name,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold
                                 )
-                                
-                                plannedExercise.sets.take(3).forEach { set ->
-                                    Text(
-                                        text = "  Set ${set.setNumber}: ${set.targetReps} reps × ${set.targetWeight} kg",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                
-                                if (plannedExercise.sets.size > 3) {
-                                    Text(
-                                        text = "  +${plannedExercise.sets.size - 3} more sets",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.secondary
-                                    )
-                                }
+                                Text(
+                                    text = exercise.muscleGroup,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        
+                        // Show planned sets
+                        if (plannedExercise.sets.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            HorizontalDivider()
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            Text(
+                                text = "${plannedExercise.sets.size} sets planned",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            
+                            plannedExercise.sets.take(3).forEach { set ->
+                                Text(
+                                    text = "  Set ${set.setNumber}: ${set.targetReps} reps × ${set.targetWeight} kg",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            
+                            if (plannedExercise.sets.size > 3) {
+                                Text(
+                                    text = "  +${plannedExercise.sets.size - 3} more sets",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.secondary
+                                )
                             }
                         }
                     }
@@ -361,18 +365,22 @@ fun StartWorkoutScreen(
             }
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+        }
         
-        Button(
-            onClick = onStartWorkout,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Icon(Icons.Default.Check, contentDescription = null)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Start Workout", style = MaterialTheme.typography.titleMedium)
+        item {
+            Button(
+                onClick = onStartWorkout,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(Icons.Default.Check, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Start Workout", style = MaterialTheme.typography.titleMedium)
+            }
         }
     }
 }

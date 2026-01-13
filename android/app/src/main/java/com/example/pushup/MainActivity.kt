@@ -130,7 +130,8 @@ fun MiniApp(authViewModel: AuthViewModel = viewModel()) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: TopDest.Home.route
     val tabs = listOf(TopDest.Home, TopDest.Workouts, TopDest.Exercises, TopDest.Statistic)
-    val selectedIndex = tabs.indexOfFirst { it.route == currentRoute }.coerceAtLeast(0)
+    val selectedIndex = tabs.indexOfFirst { it.route == currentRoute }.takeIf { it >= 0 } ?: 0
+    val isOnTabScreen = tabs.any { it.route == currentRoute }
 
     Scaffold(
         topBar = {
@@ -179,27 +180,29 @@ fun MiniApp(authViewModel: AuthViewModel = viewModel()) {
             }
         },
         bottomBar = {
-            SecondaryTabRow(
-                selectedTabIndex = selectedIndex,
-                containerColor = Color.DarkGray,
-                contentColor = Color.White
-            ) {
-                tabs.forEachIndexed { index, tab ->
-                    Tab(
-                        selected = index == selectedIndex,
-                        onClick = {
-                            if (currentRoute != tab.route) {
-                                navController.navigate(tab.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+            if (isOnTabScreen) {
+                SecondaryTabRow(
+                    selectedTabIndex = selectedIndex,
+                    containerColor = Color.DarkGray,
+                    contentColor = Color.White
+                ) {
+                    tabs.forEachIndexed { index, tab ->
+                        Tab(
+                            selected = index == selectedIndex,
+                            onClick = {
+                                if (currentRoute != tab.route) {
+                                    navController.navigate(tab.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
                                 }
-                            }
-                        },
-                        text = { Text(tab.label) }
-                    )
+                            },
+                            text = { Text(tab.label) }
+                        )
+                    }
                 }
             }
         }
